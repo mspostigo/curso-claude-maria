@@ -45,6 +45,9 @@ import { OrderService } from '../../core/services/order.service'
 
           <aside class="order-summary card">
             <h3>Resumen</h3>
+            @if (cartStore.table(); as t) {
+              <div class="summary-row"><span>Mesa</span><span>nº {{ t.numero }}</span></div>
+            }
             <div class="summary-row">
               <span>Items ({{ cartStore.itemCount() }})</span>
               <span>{{ cartStore.total() | number:'1.2-2' }} €</span>
@@ -196,7 +199,13 @@ export class CartComponent {
 
   confirmOrder(): void {
     const restaurantId = this.cartStore.restaurantId()
+    const table = this.cartStore.table()
     if (!restaurantId || this.cartStore.items().length === 0) return
+
+    if (!table || table.restaurantId !== restaurantId) {
+      this.router.navigate(['/restaurants', restaurantId, 'tables'])
+      return
+    }
 
     this.loading.set(true)
     this.error.set(null)
@@ -207,13 +216,16 @@ export class CartComponent {
       notes: item.notes || null
     }))
 
-    this.orderService.createOrder(restaurantId, items).subscribe({
+    this.orderService.createOrder(restaurantId, table.id, items).subscribe({
       next: (order) => {
         this.cartStore.clear()
+        this.cartStore.clearTable()
         this.router.navigate(['/orders', order.id])
       },
       error: (err) => {
-        this.error.set('Error al confirmar el pedido. Inténtalo de nuevo.')
+        this.error.set(err?.error?.error === 'TableNotOccupiedError'
+          ? 'Tu mesa ya no está ocupada. Vuelve a elegir mesa.'
+          : 'Error al confirmar el pedido. Inténtalo de nuevo.')
         this.loading.set(false)
       }
     })
