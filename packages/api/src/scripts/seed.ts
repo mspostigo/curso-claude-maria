@@ -71,6 +71,24 @@ const seed = async () => {
 
         console.log('Restaurants created.')
 
+        const seedTables = [
+            { numero: 1, descripcion: 'Terraza', capacidad: 2 },
+            { numero: 2, descripcion: 'Junto a la ventana', capacidad: 4 },
+            { numero: 3, descripcion: 'Salón principal', capacidad: 4 },
+            { numero: 4, descripcion: 'Salón principal', capacidad: 6 },
+            { numero: 5, descripcion: 'Reservado', capacidad: 8 },
+        ]
+        for (const restId of ['rest-1', 'rest-2']) {
+            for (const t of seedTables) {
+                const now = new Date().toISOString()
+                await dbConfig.run(`
+                    INSERT OR IGNORE INTO tables (id, restaurant_id, numero, descripcion, capacidad, estado, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, 'libre', ?, ?)
+                `, [`${restId}-mesa-${t.numero}`, restId, t.numero, t.descripcion, t.capacidad, now, now])
+            }
+        }
+        console.log('Tables created.')
+
         const ingredientsRest1 = [
             { id: randomUUID(), name: 'Tomate', unit: 'kg' },
             { id: randomUUID(), name: 'Queso mozzarella', unit: 'kg' },

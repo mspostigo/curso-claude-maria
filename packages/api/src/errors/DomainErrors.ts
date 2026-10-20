@@ -162,3 +162,75 @@ export class OrderNotFoundError extends AppError {
   }
 }
 
+
+export class TableNotFoundError extends AppError {
+  constructor() {
+    super('Table not found')
+  }
+}
+
+export class InvalidTableNumberError extends AppError {
+  constructor() {
+    super('Table number must be an integer >= 1')
+  }
+}
+
+export class InvalidTableCapacityError extends AppError {
+  constructor() {
+    super('Table capacity must be an integer between 1 and 100')
+  }
+}
+
+export class InvalidTableStatusError extends AppError {
+  constructor(message?: string) {
+    super(message ?? 'Invalid table status')
+  }
+}
+
+export class InvalidTableDescriptionError extends AppError {
+  constructor() {
+    super('Table description must be at most 200 characters')
+  }
+}
+
+export class InvalidPeopleError extends AppError {
+  constructor() {
+    super('Number of people must be an integer >= 1')
+  }
+}
+
+export class TableCapacityExceededError extends AppError {
+  constructor() {
+    super('Number of people exceeds table capacity')
+  }
+}
+
+export class TableRestaurantMismatchError extends AppError {
+  constructor() {
+    super('Table does not belong to the restaurant')
+  }
+}
+
+export class DuplicatedTableNumberError extends AppError {
+  constructor() {
+    super('Table number already exists in this restaurant')
+  }
+}
+
+export class TableNotAvailableError extends AppError {
+  constructor() {
+    super('Table is not available')
+  }
+}
+
+export class TableNotOccupiedError extends AppError {
+  constructor() {
+    super('Table is not occupied')
+  }
+}
+
+export class TableInUseError extends AppError {
+  constructor() {
+    super('Table is occupied or has active orders')
+  }
+}

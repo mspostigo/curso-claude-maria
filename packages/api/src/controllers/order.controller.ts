@@ -1,10 +1,10 @@
-import type { Request, Response } from 'express'
+import type { Request, Response, NextFunction } from 'express'
 import type { OrderService } from '@services/order.service.js'
 
 export class OrderController {
     constructor(private readonly orderService: OrderService) {}
 
-    async createOrder(req: Request, res: Response): Promise<void> {
+    async createOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const { restaurantId, tableId, items } = req.body
             const user = (req as any).user
@@ -17,11 +17,7 @@ export class OrderController {
             })
             res.status(201).json(order)
         } catch (error) {
-            if (error instanceof Error) {
-                res.status(400).json({ error: error.message })
-            } else {
-                res.status(500).json({ error: 'Internal Server Error' })
-            }
+            next(error)
         }
     }
 

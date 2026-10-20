@@ -2,7 +2,11 @@ import { randomUUID } from 'crypto'
 import type { Order, OrderItem } from '@models/order.model.js'
 import { normalizeOrderStatus } from '@models/order.model.js'
 import type { OrderRepository } from '@repositories/order.repository.js'
-import { RestaurantIdRequiredError, OrderNotFoundError } from '@errors/DomainErrors.js'
+import type { TableRepository } from '@repositories/table.repository.js'
+import {
+    RestaurantIdRequiredError, OrderNotFoundError, TableNotFoundError,
+    TableRestaurantMismatchError, TableNotOccupiedError
+} from '@errors/DomainErrors.js'
 
 export interface CreateOrderRequest {
     restaurantId: string
@@ -16,11 +20,23 @@ export interface CreateOrderRequest {
 }
 
 export class OrderService {
-    constructor(private readonly orderRepository: OrderRepository) {}
+    constructor(
+        private readonly orderRepository: OrderRepository,
+        private readonly tableRepository?: TableRepository
+    ) {}
 
     async create(request: CreateOrderRequest): Promise<Order> {
         if (!request.restaurantId || request.restaurantId.trim() === '') {
             throw new RestaurantIdRequiredError()
+        }
+
+        let tableNumber: number | null = null
+        if (request.tableId && this.tableRepository) {
+            const table = await this.tableRepository.findById(request.tableId)
+            if (!table) throw new TableNotFoundError()
+            if (table.restaurantId !== request.restaurantId) throw new TableRestaurantMismatchError()
+            if (table.estado !== 'ocupada') throw new TableNotOccupiedError()
+            tableNumber = table.numero
         }
 
         const items: OrderItem[] = []
@@ -40,6 +56,7 @@ export class OrderService {
             id: randomUUID(),
             restaurantId: request.restaurantId,
             tableId: request.tableId,
+            tableNumber,
             clientId: request.clientId,
             createdAt: new Date(),
             items
