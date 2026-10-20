@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core'
-import { ActivatedRoute, RouterLink } from '@angular/router'
+import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { DecimalPipe } from '@angular/common'
 import { LucideAngularModule } from 'lucide-angular'
 import { DishService } from '../../core/services/dish.service'
@@ -15,8 +15,11 @@ import { Restaurant } from '../../core/models/restaurant.model'
     <div class="container">
       <div class="page-header">
         <div>
-          <a routerLink="/restaurants" class="back-link">← Volver a restaurantes</a>
+          <a [routerLink]="['/restaurants', restaurant()?.id ?? '', 'tables']" class="back-link">← Cambiar de mesa</a>
           <h1>{{ restaurant()?.name || 'Cargando...' }}</h1>
+          @if (cartStore.table(); as t) {
+            <p class="table-badge">Mesa nº {{ t.numero }} · {{ t.personas }} personas</p>
+          }
         </div>
       </div>
 
@@ -88,6 +91,7 @@ import { Restaurant } from '../../core/models/restaurant.model'
       max-width: 1200px;
       margin: 0 auto;
     }
+    .table-badge { color: var(--green-light); font-size: 14px; margin-top: 4px; }
     .back-link {
       font-size: 13px;
       color: var(--text-muted);
@@ -209,6 +213,7 @@ import { Restaurant } from '../../core/models/restaurant.model'
 })
 export class RestaurantMenuComponent implements OnInit {
   private readonly route = inject(ActivatedRoute)
+  private readonly router = inject(Router)
   private readonly dishService = inject(DishService)
   private readonly restaurantService = inject(RestaurantService)
   readonly cartStore = inject(CartStore)
@@ -234,6 +239,11 @@ export class RestaurantMenuComponent implements OnInit {
 
   ngOnInit(): void {
     const restaurantId = this.route.snapshot.paramMap.get('id')!
+    const table = this.cartStore.table()
+    if (!table || table.restaurantId !== restaurantId) {
+      this.router.navigate(['/restaurants', restaurantId, 'tables'])
+      return
+    }
     this.loadData(restaurantId)
   }
 

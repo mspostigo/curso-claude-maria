@@ -1,0 +1,69 @@
+<div class="page-header">
+  <h1>Mesas</h1>
+</div>
+
+@if (tableStore.loading() && tableStore.tables().length === 0) {
+  <div class="spinner"></div>
+}
+
+@if (tableStore.error()) {
+  <div class="alert-error">{{ tableStore.error() }}</div>
+}
+
+@if (!tableStore.loading() || tableStore.tables().length > 0) {
+  @if (tableStore.tables().length === 0) {
+    <div class="empty-state">
+      <p>No hay mesas configuradas en este restaurante</p>
+    </div>
+  } @else {
+    <div class="tables-grid">
+      @for (table of tableStore.tables(); track table.id) {
+        <div class="table-card" [class]="'table-card estado-' + table.estado">
+          <div class="table-header">
+            <div>
+              <span class="table-number">Mesa {{ table.numero }}</span>
+              <span class="table-capacity">{{ table.capacidad }} personas</span>
+            </div>
+            <span [class]="'badge badge-mesa-' + table.estado">{{ table.estado }}</span>
+          </div>
+          @if (table.descripcion) {
+            <p class="table-desc">{{ table.descripcion }}</p>
+          }
+
+          <div class="status-actions">
+            @for (s of statuses; track s) {
+              <button
+                class="btn btn-sm"
+                [class.btn-primary]="table.estado === s"
+                [class.btn-secondary]="table.estado !== s"
+                [disabled]="table.estado === s"
+                (click)="changeStatus(table, s)">
+                {{ s }}
+              </button>
+            }
+          </div>
+
+          @if (table.estado === 'ocupada') {
+            <div class="table-orders">
+              @if (ordersOf(table).length === 0) {
+                <p class="no-orders">Sin pedidos activos</p>
+              } @else {
+                @for (order of ordersOf(table); track order.id) {
+                  <div class="order-block">
+                    <span class="order-id">Pedido #{{ order.id.substring(0, 8) }}</span>
+                    @for (item of order.items; track item.id) {
+                      <div class="order-item">
+                        <span class="item-name">{{ item.quantity }}x {{ item.dishName || 'Producto' }}</span>
+                        <span [class]="'badge badge-' + item.status">{{ item.status }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+}
