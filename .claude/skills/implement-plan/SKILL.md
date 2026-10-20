@@ -1,24 +1,24 @@
 ---
 name: implement-plan
-description: Implementa un plan de docs/plans/ en un git worktree aislado, tarea a tarea con TDD estricto, haciendo un commit por tarea y marcándola como hecha en el plan hasta cumplir los criterios de aceptación. Úsala cuando el usuario pida implementar, ejecutar o desarrollar un plan ya redactado.
-argument-hint: "[ruta del plan, p. ej. docs/plans/refactor-middleware-gestion-errores.md]"
+description: Implementa el plan de una issue de GitHub en un git worktree aislado, tarea a tarea con TDD estricto, haciendo un commit por tarea y marcándola como hecha en el plan hasta cumplir los criterios de aceptación; al terminar crea la PR y avisa por Slack con su enlace. Úsala cuando el usuario pida implementar, ejecutar o desarrollar una issue con plan ya redactado.
+argument-hint: "[número de la issue de GitHub]"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash, AskUserQuestion, mcp__slack__slack_post_message
 ---
 
-Implementa el plan: $ARGUMENTS
+Implementa el plan de la issue de GitHub: $ARGUMENTS
 
-Los planes los genera la skill `plan-feature` (ver `docs/plans/`): objetivo, tareas numeradas con casilla `- [ ]` y criterios de aceptación con casilla `- [ ]`.
+El usuario indica el número de la issue a implementar. Los planes los genera la skill `plan-feature` (se guardan en `docs/plans/` y se publican como comentario de la issue): objetivo, tareas numeradas con casilla `- [ ]` y criterios de aceptación con casilla `- [ ]`.
 
 ## 0. Preparación
 
-1. **Localiza el plan.** Si `$ARGUMENTS` está vacío o no existe el archivo, lista `docs/plans/` y pregunta con `AskUserQuestion` cuál implementar. Léelo entero junto con `CLAUDE.md`.
+1. **Busca la issue y localiza el plan.** Si `$ARGUMENTS` no contiene un número de issue, pídeselo al usuario con `AskUserQuestion`. Obtén la issue con `gh issue view <número> --comments` (si falla, informa y detente). El plan es el comentario de la issue generado por `plan-feature`; localiza además su archivo en `docs/plans/` (si existe, es el que se usa; si no, créalo a partir del comentario con la misma estructura). Si la issue no tiene plan, avisa y sugiere ejecutar antes `plan-feature`. Léelo entero junto con `CLAUDE.md`.
 2. **Valida el plan.** Debe tener tareas y criterios de aceptación. Si faltan, avisa y detente. Si ya hay tareas marcadas `- [x]`, retoma desde la primera pendiente (no repitas las hechas).
 3. **Node:** `node` no está en el PATH; antepón `source ~/.nvm/nvm.sh &&` a todo comando `node`/`npm`.
 
 ## 1. Crear el git worktree
 
 1. Comprueba que el árbol de trabajo principal no tiene cambios sin commitear en `src/` (los archivos no versionados del propio plan no cuentan). Si los hay, avisa al usuario y pregunta.
-2. Deriva el nombre del plan quitando `.md` (p. ej. `refactor-middleware-gestion-errores`) y crea el worktree en una carpeta hermana del repositorio, con rama nueva desde `HEAD`:
+2. Deriva el nombre del plan quitando `.md` (p. ej. `refactor-middleware-gestion-errores`; es el nombre del archivo del plan en `docs/plans/`) y crea el worktree en una carpeta hermana del repositorio, con rama nueva desde `HEAD`:
 
    ```bash
    git worktree add -b <nombre-del-plan> ../<repo>-worktrees/<nombre-del-plan>
@@ -27,7 +27,7 @@ Los planes los genera la skill `plan-feature` (ver `docs/plans/`): objetivo, tar
    Si la rama o la carpeta ya existen, pregunta si reutilizarlas en lugar de sobrescribir.
 3. **El plan puede no estar versionado** (`docs/plans/` suele estar sin trackear) y entonces no existirá en el worktree. Cópialo a la misma ruta relativa dentro del worktree. Se versionará en el commit de la primera tarea.
 4. Trabaja **solo dentro del worktree** a partir de aquí (rutas absolutas o `cd` al worktree en cada comando). Si falta `node_modules`, ejecuta `npm install` allí.
-5. No hagas push ni elimines el worktree al terminar.
+5. No elimines el worktree al terminar. El push solo se hace en el cierre, para crear la PR.
 
 ## 2. Bucle por tarea
 
@@ -72,13 +72,18 @@ Al terminar todas las tareas:
 
 ## 4. Cierre
 
-Antes del resumen, **avisa por Slack**: cuando todas las tareas estén hechas y los criterios de aceptación cumplidos, publica con `mcp__slack__slack_post_message` un mensaje en el canal `revisar-plan` indicando que la implementación está lista para revisarse: nombre del plan, rama y ruta del worktree, nº de tareas/commits y resultado de la suite. No avises si quedó alguna tarea o criterio sin cumplir. Si el envío falla (canal inexistente, token ausente), no abortes: informa del error al usuario.
+Cuando todas las tareas estén hechas y los criterios cumplidos (si queda alguna tarea o criterio sin cumplir, no crees la PR ni avises por Slack: informa al usuario):
 
-Resume al usuario, sin extenderte: ruta y rama del worktree, nº de tareas y commits (`git log --oneline` de la rama), resultado de la suite, estado de cada criterio de aceptación y cualquier desviación respecto al plan. Indica que la rama no se ha fusionado ni subido y pregunta si quiere abrir un PR o fusionarla.
+1. **Sube la rama** desde el worktree: `git push -u origin <nombre-del-plan>` (sin `--force`).
+2. **Crea la PR** con `gh pr create --base main --head <nombre-del-plan>`, título en Conventional Commits y en español, y cuerpo con: resumen del objetivo, lista de tareas/commits, resultado de la suite, estado de los criterios de aceptación y `Closes #<número>` para enlazar la issue. Termina el cuerpo con la línea de atribución que indique el sistema. Si ya existe una PR para la rama, reutilízala. Guarda la URL que devuelve `gh`.
+3. **Avisa por Slack** con `mcp__slack__slack_post_message` en el canal `revisar-plan`: un mensaje que incluya el **enlace directo a la PR**, la issue, la rama, el nº de tareas/commits y el resultado de la suite. Si el envío falla (canal inexistente, token ausente), no abortes: informa del error al usuario.
+
+Resume al usuario, sin extenderte: URL de la PR, ruta y rama del worktree, nº de tareas y commits (`git log --oneline` de la rama), resultado de la suite, estado de cada criterio de aceptación y cualquier desviación respecto al plan. Indica que la rama no se ha fusionado.
 
 ## Reglas
 
 - Español en todo lo que escribas (código comentado, commits, mensajes al usuario).
 - Nunca modifiques el repositorio principal salvo para crear el worktree.
+- Solo se hace push de la rama del plan, y únicamente en el cierre para crear la PR.
 - No saltes tareas, no cambies su orden y no reescribas el plan salvo para marcar casillas o añadir tareas correctivas.
 - Nunca uses `--no-verify`, `git push --force` ni acciones destructivas.
