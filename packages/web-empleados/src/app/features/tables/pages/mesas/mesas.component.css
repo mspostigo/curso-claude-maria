@@ -1,0 +1,31 @@
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size: 24px; font-weight: 600; color: var(--text-primary); }
+.tables-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.estado-libre { border-left-color: var(--green-light); }
+.estado-ocupada { border-left-color: var(--orange); }
+.estado-reservada { border-left-color: var(--yellow); }
+.table-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.table-number { display: block; font-weight: 600; color: var(--text-primary); }
+.table-capacity, .table-desc, .no-orders { font-size: 12px; color: var(--text-muted); margin: 0; }
+.status-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.status-actions .btn { text-transform: capitalize; }
+.table-orders { border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.order-block { display: flex; flex-direction: column; gap: 6px; }
+.order-id { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.order-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.item-name { color: var(--text-primary); font-size: 13px; }
+.badge { display: inline-flex; padding: 3px 10px; font-size: 11px; font-weight: 500; border-radius: 20px; text-transform: capitalize; }
+.badge-mesa-libre { background: var(--green-glow); color: var(--green-light); }
+.badge-mesa-ocupada { background: var(--orange-glow); color: var(--orange); }
+.badge-mesa-reservada { background: var(--yellow-glow); color: var(--yellow); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
